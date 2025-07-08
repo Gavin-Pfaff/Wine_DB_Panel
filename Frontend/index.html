@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Wine Cellar Manager</title>
+	<style>
+
+		body { font-family: Helvetica; }
+		input { margin: 5px; padding: 10px; }
+
+		#wine-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 20px;
+			margin-top: 20px;
+		}
+
+		.wine-card {
+			border: 1px solid #ccc;
+			padding: 15px;
+			border-radius: 8px;
+			background: #f9f9f9;
+		}
+
+		.wine-card h4 {
+			margin-top: 0;
+			color: #8B0000;
+		}
+
+
+	</style>
+</head>
+<body>
+
+
+
+
+	<h2>Add A New Bottle Here:</h2>
+	<form id="NewBottle">
+		<input type="text" id="name" placeholder="Wine Name" required><br>
+		<input type="text" id="year" placeholder="Vintage" required><br>
+		<input type="text" id="make" placeholder="Maker" required><br>
+
+		<h3>Varietals:</h3>
+		<div id="varietals-dict">
+
+		</div>
+		<button type="button" id="add-varietal">+ Add Varietal</button><br><br>
+
+		<button type="submit">Add Bottle</button>
+	</form>
+
+
+
+
+
+
+
+	<h2>Drink A Bottle!</h2>
+	<form id="DrankBottle">
+		<input type="text" id="search-name" placeholder="Wine Name" required><br>
+		<input type="text" id="search-year" placeholder="Vintage" required><br>
+		<input type="text" id="search-make" placeholder="Maker" required><br>
+
+		<button type="submit">Drink Wine!</button><br>
+	</form>
+
+
+
+	<h2> Browse the Collection!</h2>
+
+
+	<select id ="Winery_Filter">
+		<option value="">Select A Winery</option>
+	</select>
+
+	<div id="Wine_Grid">
+
+	</div>
+
+
+
+
+	<script>
+
+//varietal field addition
+		let varietalCount = 0;
+
+		addVarietalField();
+
+		document.getElementById('add-varietal').addEventListener('click', addVarietalField);
+
+		function addVarietalField() {
+			varietalCount++;
+
+			const container =document.getElementById('varietals-dict');
+
+			const fieldDiv = document.createElement('div');
+			fieldDiv.id = `varietal-${varietalCount}`;
+			fieldDiv.innerHTML = `
+				<input type="text" id="grape-${varietalCount}" placeholder="Grape Type">
+				<input type="text" id="percent-${varietalCount}" placeholder="Percentage">
+				<button type="button" onclick="removeVarietal(${varietalCount})">Remove</button>
+				<br>
+			`;
+			container.appendChild(fieldDiv);
+
+		}
+
+		function removeVarietal(id) {
+			document.getElementById(`varietal-${id}`).remove();
+		}
+
+
+//newbottle to server
+		document.getElementById('NewBottle').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const varietals = {};
+			for(let i = 1; i <= varietalCount; i++) {
+				const grapeField = document.getElementById(`grape-${i}`);
+				const percentField = document.getElementById(`percent-${i}`);
+
+				if (grapeField && grapeField.value && percentField && percentField.value) {
+					varietals[grapeField.value.replace(' ', '_')] = percentField.value;
+				}
+			}
+
+			const wineData = {
+				name: document.getElementById('name').value,
+				year: document.getElementById('year').value,
+				make: document.getElementById('make').value,
+				varietals: varietals
+			};
+
+			try {
+				const response = await fetch('http://localhost:5000/add_wine', {
+					method: 'POST',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify(wineData)
+				});
+
+				const result = await response.json();
+				alert('Success: ' + result.message);
+			} catch (error) {
+				alert('Error: ' + error.message);
+			}
+		});
+
+//drinkbottle to server
+
+		document.getElementById('DrankBottle').addEventListener('submit', async (e) => {
+			e.preventDefault();
+
+			const wineData = {
+				name: document.getElementById('search-name').value,
+				year: document.getElementById('search-year').value,
+				make: document.getElementById('search-make').value,
+			};
+
+			try {
+				const response = await fetch('http://localhost:5000/drink_wine', {
+					method: 'POST',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify(wineData)
+				});
+
+				const result = await response.json();
+				alert('Success: ' + result.message);
+			} catch (error) {
+				alert('Error: ' + error.message);
+			}
+
+		});
+
+//Picklist selector for Wine card grid
+
+		fetch('http://localhost:5000/wineries')
+			.then(response => response.json())
+			.then(wineries => {
+				const select = document.getElementById('Winery_Filter');
+				wineries.forEach(winery => {
+					select.innerHTML += `<option value="${winery}">${winery}</option>`;
+				});
+
+			});
+		fetch('http://localhost:5000/dynamic_wines')
+			.then(response => response.json())
+			.then(wines => updateWineGrid(wines))
+
+
+		document.getElementById('Winery_Filter').addEventListener('change', function() {
+			const selectedWinery = this.value;
+
+			let url = 'http://localhost:5000/dynamic_wines';
+			if(selectedWinery) {
+				url += `/${selectedWinery}`;
+			}
+
+			fetch(url)
+				.then(response => response.json())
+				.then(wines => updateWineGrid(wines));
+			});
+
+
+	///function to build grid
+		function updateWineGrid(wines) {
+			const grid = document.getElementById('Wine_Grid');
+			grid.innerHTML = '';
+
+			wines.forEach(wine => {
+				let varietalText = '';
+				for (let grape in wine.varietals) {
+					varietalText += `${grape}: ${wine.varietals[grape]}`;
+				}
+
+				const winecardHTML = `
+					<div class="wine-card">
+						<h4>${wine.vintage} (${wine.name})</h4>
+						<p><strong>Winery:</strong> ${wine.make}</p>
+						<p><strong>Varietals:</strong> ${varietalText}</p>
+					</div>
+				`;
+
+				grid.innerHTML += winecardHTML;
+			});
+		}
+	</script>
+</body>
+</html>
