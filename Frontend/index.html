@@ -200,7 +200,19 @@
 				.then(wines => updateWineGrid(wines));
 			});
 
+	///add event listener to pass params to drink bottle fields
+		document.addEventListener('click', function(e) {
+			const card = e.target.closest('.wine-card');
+			if (card) {
+				const vintage = card.dataset.vintage;
+				const name = card.dataset.name;
+				const make = card.dataset.make;
 
+				document.getElementById('search-name').value = name;
+				document.getElementById('search-year').value = vintage;
+				document.getElementById('search-make').value = make;
+			}
+		})
 	///function to build grid
 		function updateWineGrid(wines) {
 			const grid = document.getElementById('Wine_Grid');
@@ -213,11 +225,11 @@
 				}
 
 				const winecardHTML = `
-					<div class="wine-card">
+					<button class="wine-card" data-vintage="${wine.vintage}" data-name="${wine.name}" data-make="${wine.make}">
 						<h4>${wine.vintage} (${wine.name})</h4>
 						<p><strong>Winery:</strong> ${wine.make}</p>
 						<p><strong>Varietals:</strong> ${varietalText}</p>
-					</div>
+					</button>
 				`;
 
 				grid.innerHTML += winecardHTML;
