@@ -73,6 +73,9 @@
 		<option value="">Select A Winery</option>
 	</select>
 
+	<h4> Number of Bottles in Stock: <span id="Wines_Length">0</span></h4>
+	
+
 	<div id="Wine_Grid">
 
 	</div>
@@ -184,8 +187,10 @@
 			});
 		fetch('http://localhost:5000/dynamic_wines')
 			.then(response => response.json())
-			.then(wines => updateWineGrid(wines))
-
+			.then(wines => {
+				updateWineGrid(wines);
+				document.getElementById('Wines_Length').textContent = wines.length;
+				});
 
 		document.getElementById('Winery_Filter').addEventListener('change', function() {
 			const selectedWinery = this.value;
@@ -195,9 +200,14 @@
 				url += `/${selectedWinery}`;
 			}
 
+			
+
 			fetch(url)
 				.then(response => response.json())
-				.then(wines => updateWineGrid(wines));
+				.then(wines => {
+					updateWineGrid(wines);
+					document.getElementById('Wines_Length').textContent = wines.length;
+				});
 			});
 
 	///add event listener to pass params to drink bottle fields
@@ -213,7 +223,7 @@
 				document.getElementById('search-make').value = make;
 			}
 		})
-	///function to build grid
+	///function to build button grid
 		function updateWineGrid(wines) {
 			const grid = document.getElementById('Wine_Grid');
 			grid.innerHTML = '';
