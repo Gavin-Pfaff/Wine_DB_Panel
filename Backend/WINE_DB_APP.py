@@ -45,8 +45,12 @@ def pass_wineries():
 
 @app.route('/dynamic_wines')
 @app.route('/dynamic_wines/<winery>')
-def dynamic_wines(winery=None):
-	wines = Wines_by_Winery(winery)
+def dynamic_wines(winery=None, varietals_select=None):
+	if varietals_select == None:
+		wines = Wines_by_Winery(winery)
+	else:
+		wines = Wines_by_Winery_varsubset(winery, varietals_select)
+
 	return jsonify(wines)
 
 
