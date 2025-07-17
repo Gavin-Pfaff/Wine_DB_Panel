@@ -111,12 +111,16 @@ def Wines_by_Winery_var_subset(winery_name=None, varietals_set=None):
     for v in varietals_set:
         cond.append(
             sql.SQL("{} IS NOT NULL").format(sql.Identifier(v)))
+    if winery_name:
+        query = sql.SQL('SELECT * from "Wines" WHERE "Make" = {winery_name} AND ({varietals_set})').format(winery_name = sql.Literal(winery_name), varietals_set = sql.SQL(' OR ').join(cond))
+    else:
+        query = sql.SQL('SELECT * from "Wines" WHERE({varietals_set})').format(varietals_set = sql.SQL(' OR ').join(cond))
 
-    query = sql.SQL('SELECT * from "Wines" WHERE "Make" = {winery_name} AND ({varietals_set})').format(winery_name = sql.Literal(winery_name), varietals_set = sql.SQL(' OR ').join(cond))
+    conn2 = pg.connect(host='localhost', database='wine_cellar', user='postgres', password='Bungee12?', port = '5123')
 
-    query = query.as_string(conn)
+    query = query.as_string(conn2)
 
-    dynamic_wines = conn.execute(query)
+    dynamic_wines = conn.execute(postgres.text(query))
     columns = dynamic_wines.keys()
     dynamic_wines = [row for row in dynamic_wines]
 

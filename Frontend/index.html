@@ -73,6 +73,21 @@
 		<option value="">Select A Winery</option>
 	</select>
 
+	<details id ="varietals_menu">
+		<summary> Thinking of a Grape? </summary>
+		<div id = "var_menu_open">
+			<div id="varietals_filter">
+			</div>
+			<button id="var_filt_activate">Show me wines with these Grapes</button>
+
+
+		</div>
+	</details>
+
+	<div id ="selected_grapes" style="display:none;">
+		Showing:<span id="grape_set"></span>
+	</div>
+
 	<h4> Number of Bottles in Stock: <span id="Wines_Length">0</span></h4>
 	
 
@@ -183,8 +198,24 @@
 				wineries.forEach(winery => {
 					select.innerHTML += `<option value="${winery}">${winery}</option>`;
 				});
-
 			});
+
+
+		fetch('http://localhost:5000/varietals')
+			.then(response => response.json())
+			.then(varietals => {
+				const select = document.getElementById('varietals_filter');
+				varietals.forEach(varietal => {
+					select.innerHTML += `
+						<div>
+							<input type="checkbox" id="${varietal}" name="varietals" value="${varietal}">
+							<label for="${varietal}">${varietal}</label>
+						</div>
+					`;
+				});
+			});
+
+
 		fetch('http://localhost:5000/dynamic_wines')
 			.then(response => response.json())
 			.then(wines => {
@@ -193,22 +224,46 @@
 				});
 
 		document.getElementById('Winery_Filter').addEventListener('change', function() {
-			const selectedWinery = this.value;
+			const selected = Array.from(document.querySelectorAll('input[name="varietals"]:checked')).map(checkbox => checkbox.value);
 
+			document.getElementById('grape_set').textContent = selected.join(',');
+			document.getElementById('selected_grapes').style.display = 'block';
+
+			document.getElementById('varietals_menu').open = false;
+
+			WinesWithVarietals(selected);
+
+
+			});
+
+
+
+	///handling varietals checkbox field operations
+		document.getElementById('var_filt_activate').addEventListener('click', function() {
+			const selected = Array.from(document.querySelectorAll('input[name="varietals"]:checked')).map(checkbox => checkbox.value);
+
+			document.getElementById('grape_set').textContent = selected.join(',');
+			document.getElementById('selected_grapes').style.display = 'block';
+
+			document.getElementById('varietals_menu').open = false;
+
+			WinesWithVarietals(selected);
+		});
+
+		function WinesWithVarietals(varietals) {
+			const selectedWinery = document.getElementById('Winery_Filter').value
 			let url = 'http://localhost:5000/dynamic_wines';
 			if(selectedWinery) {
 				url += `/${selectedWinery}`;
 			}
-
-			
-
+			url += `?varietals=${varietals.join(',')}`;
 			fetch(url)
 				.then(response => response.json())
 				.then(wines => {
 					updateWineGrid(wines);
 					document.getElementById('Wines_Length').textContent = wines.length;
 				});
-			});
+		}
 
 	///add event listener to pass params to drink bottle fields
 		document.addEventListener('click', function(e) {
