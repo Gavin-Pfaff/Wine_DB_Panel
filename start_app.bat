@@ -1,6 +1,7 @@
 @echo off
 title Wine Cellar Application
-
+cd /d "%~dp0"
+echo Current Directory: %CD%
 echo ========================================
 echo    Starting Wine Cellar Application
 echo ========================================
@@ -10,10 +11,11 @@ echo [1/3] Starting Flask Backend Server...
 start "Wine Backend" cmd /k "cd /d %~dp0backend && python WINE_DB_APP.py"
 
 echo [2/3] Waiting for backend to initialize...
-timeout /t 3 /nobreak >nul
+timeout /t 10 /nobreak >nul
 
-echo [3/3] Opening Frontend in Browser...
-start "" "%~dp0frontend\index.html"
+echo [3/3] Starting Electron Frontend...
+npm start
+
 
 
 
